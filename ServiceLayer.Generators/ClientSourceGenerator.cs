@@ -303,7 +303,7 @@ public class ClientSourceGenerator : IIncrementalGenerator
             sourceBuilder.AppendLine("             if (response.IsSuccessStatusCode)");
             sourceBuilder.AppendLine("             {");
             sourceBuilder.AppendLine($"                 var content = await response.Content.ReadFromJsonAsync<{method.ReturnType}>();");
-            sourceBuilder.AppendLine("                 return content;");
+            sourceBuilder.AppendLine("                 return content!;");
             sourceBuilder.AppendLine("             }");
             sourceBuilder.AppendLine("             else");
             sourceBuilder.AppendLine("             {");
