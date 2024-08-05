@@ -125,6 +125,11 @@ public class ServerSourceGenerator : IIncrementalGenerator
                     }
                 }
 
+                if (methodSymbolInfo.DeclaredAccessibility != Accessibility.Public)
+                {
+                    continue;
+                }
+
                 if (methodSymbolInfo.ReturnType is null)
                 {
                     interfaceToGenerate.Diagnostics.Add(
