@@ -305,6 +305,9 @@ public class ClientSourceGenerator : IIncrementalGenerator
             sourceBuilder.AppendLine($"                 var content = await response.Content.ReadFromJsonAsync<{method.ReturnType}>();");
             sourceBuilder.AppendLine("                 return content!;");
             sourceBuilder.AppendLine("             }");
+            sourceBuilder.AppendLine("             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound) {");
+            sourceBuilder.AppendLine($"                throw new InvalidOperationException(\"The endpoint {method.Route} was not found.  Are service endpoints registered?\");");
+            sourceBuilder.AppendLine("             }");
             sourceBuilder.AppendLine("             else");
             sourceBuilder.AppendLine("             {");
             sourceBuilder.AppendLine("                 throw new InvalidOperationException();");
