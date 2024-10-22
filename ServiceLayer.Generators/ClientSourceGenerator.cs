@@ -81,7 +81,7 @@ public class ClientSourceGenerator : IIncrementalGenerator
                 {
                     routeInterfaceComponent = routeInterfaceComponent.Substring(1);
                 }
-                var defaultRoute = $"/s/{routeInterfaceComponent}/{methodName}".ToLower();
+                var defaultRoute = $"s/{routeInterfaceComponent}/{methodName}".ToLower();
 
                 var exposedServiceRoute = EnumerateAttributeSyntax(semanticModel, methodDeclarationSyntax, "ServiceLayer.Abstractions.ExposedServiceRouteAttribute").FirstOrDefault();
                 if (exposedServiceRoute is not null)
@@ -107,22 +107,13 @@ public class ClientSourceGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                if (methodSymbolInfo.ReturnType.ContainingNamespace.ToDisplayString() != "System.Threading.Tasks" || methodSymbolInfo.ReturnType.Name != "Task")
-                {
-                    interfaceToGenerate.Diagnostics.Add(
-                        Diagnostic.Create("IF000", "Interface Generation", $"Return from an externally exposed interface method must be a task, it was {methodSymbolInfo.ReturnType.ToDisplayString()}", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0)
-                    );
-
-                    continue;
-                }
-
                 var returnTypeWithTask = methodSymbolInfo.ReturnType.ToDisplayString();
                 var taskRegex = new Regex("System.Threading.Tasks.Task<(?<returnType>.*)>");
                 var taskRegexMatch = taskRegex.Match(returnTypeWithTask);
                 if (!taskRegexMatch.Success)
                 {
                     interfaceToGenerate.Diagnostics.Add(
-                        Diagnostic.Create("IF000", "Interface Generation", $"Return from an externally exposed interface method must be a task, it was {methodSymbolInfo.ReturnType.ToDisplayString()}", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0)
+                        Diagnostic.Create("IF000", "Interface Generation", $"Return from an externally exposed interface method must be a task that returns a result, it was {methodSymbolInfo.ReturnType.ToString()}", DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0)
                     );
 
                     continue;
