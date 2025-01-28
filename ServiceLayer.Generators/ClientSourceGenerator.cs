@@ -166,7 +166,7 @@ public class ClientSourceGenerator : IIncrementalGenerator
 
                 var cancellationParameter = parameterQueue.Dequeue();
                 var cancellationParameterNameNode = cancellationParameter.ChildNodesAndTokens().First();
-                var cancellationParameterTokenNode = cancellationParameter.ChildNodesAndTokens().Last();
+                var cancellationParameterTokenNode = cancellationParameter.ChildNodesAndTokens().Skip(1).First();
                 if (cancellationParameterNameNode.AsNode() is not IdentifierNameSyntax cancellationParameterNameSyntax)
                 {
                     interfaceToGenerate.Diagnostics.Add(
@@ -285,11 +285,11 @@ public class ClientSourceGenerator : IIncrementalGenerator
             sourceBuilder.AppendLine($"        {{");
             if (method.DataParmeter.dataParameterType is not null)
             {
-                sourceBuilder.AppendLine($"             var response = await client.PostAsJsonAsync<{method.DataParmeter.dataParameterType}>($\"{method.Route}\", {method.DataParmeter.dataParameterName}, ct);");
+                sourceBuilder.AppendLine($"             var response = await client.PostAsJsonAsync<{method.DataParmeter.dataParameterType}>($\"{method.Route}\", {method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterName});");
             }
             else
             {
-                sourceBuilder.AppendLine($"             var response = await client.GetAsync($\"{method.Route}\", ct);");
+                sourceBuilder.AppendLine($"             var response = await client.GetAsync($\"{method.Route}\", {method.CancellationParameter.cancellationParameterName});");
             }
             sourceBuilder.AppendLine("             if (response.IsSuccessStatusCode)");
             sourceBuilder.AppendLine("             {");

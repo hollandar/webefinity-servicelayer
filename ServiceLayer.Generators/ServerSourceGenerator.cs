@@ -204,10 +204,9 @@ public class ServerSourceGenerator : IIncrementalGenerator
                     dataParameterType = dataParameterSymbol.ToDisplayString();
                     dataParameterName = dataParameterTokenNode.AsToken().ToFullString();
                 }
-
                 var cancellationParameter = parameterQueue.Dequeue();
                 var cancellationParameterNameNode = cancellationParameter.ChildNodesAndTokens().First();
-                var cancellationParameterTokenNode = cancellationParameter.ChildNodesAndTokens().Last();
+                var cancellationParameterTokenNode = cancellationParameter.ChildNodesAndTokens().Skip(1).First();
                 if (cancellationParameterNameNode.AsNode() is not IdentifierNameSyntax cancellationParameterNameSyntax)
                 {
                     interfaceToGenerate.Diagnostics.Add(
@@ -299,11 +298,11 @@ public class ServerSourceGenerator : IIncrementalGenerator
         foreach (var method in source.Methods) {
             if (method.DataParmeter.dataParameterType is not null)
             {
-                sourceBuilder.AppendLine($"            app.MapPost(\"{method.Route}\", async ({source.InterfaceNamespace}.{source.InterfaceName} service, [FromBody] {method.DataParmeter.dataParameterType} {method.DataParmeter.dataParameterName}, CancellationToken ct) => await service.{method.Name}({method.DataParmeter.dataParameterName}, ct));");
+                sourceBuilder.AppendLine($"            app.MapPost(\"{method.Route}\", async ({source.InterfaceNamespace}.{source.InterfaceName} service, [FromBody] {method.DataParmeter.dataParameterType} {method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => await service.{method.Name}({method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterName}));");
             }
             else
             {
-                sourceBuilder.AppendLine($"            app.MapGet(\"{method.Route}\", async ({source.InterfaceNamespace}.{source.InterfaceName} service, CancellationToken ct) => await service.{method.Name}(ct));");
+                sourceBuilder.AppendLine($"            app.MapGet(\"{method.Route}\", async ({source.InterfaceNamespace}.{source.InterfaceName} service, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => await service.{method.Name}({method.CancellationParameter.cancellationParameterName}));");
             }
         }
         sourceBuilder.AppendLine( "        }");
