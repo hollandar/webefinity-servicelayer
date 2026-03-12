@@ -309,7 +309,12 @@ public class ServerSourceGenerator : IIncrementalGenerator
             }
             else
             {
-                sourceBuilder.AppendLine($"            app.MapGet(\"{method.Route}\", ({source.InterfaceNamespace}.{source.InterfaceName} service, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => service.{method.Name}({method.CancellationParameter.cancellationParameterName}));");
+                sourceBuilder.AppendLine($"            app.MapGet(\"{method.Route}\", (HttpContext context, {source.InterfaceNamespace}.{source.InterfaceName} service, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => {{");
+                sourceBuilder.AppendLine("                 context.Response.Headers[\"Cache-Control\"] = \"no-store, no-cache, must-revalidate, max-age=0\";");
+                sourceBuilder.AppendLine("                 context.Response.Headers[\"Pragma\"] = \"no-cache\";");
+                sourceBuilder.AppendLine("                 context.Response.Headers[\"Expires\"] = \"0\";");
+                sourceBuilder.AppendLine($"                return service.{method.Name}({method.CancellationParameter.cancellationParameterName});");
+                sourceBuilder.AppendLine("             });");
             }
         }
         sourceBuilder.AppendLine( "        }");
