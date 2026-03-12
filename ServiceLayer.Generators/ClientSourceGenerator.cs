@@ -299,7 +299,7 @@ public class ClientSourceGenerator : IIncrementalGenerator
             }
             sourceBuilder.AppendLine("             if (response.IsSuccessStatusCode)");
             sourceBuilder.AppendLine("             {");
-            sourceBuilder.AppendLine($"                 var content = await response.Content.ReadFromJsonAsync<{method.ReturnType}>(ct);");
+            sourceBuilder.AppendLine($"                 var content = await response.Content.ReadFromJsonAsync<{method.ReturnType}>({method.CancellationParameter.cancellationParameterName});");
             sourceBuilder.AppendLine("                 return content!;");
             sourceBuilder.AppendLine("             }");
             sourceBuilder.AppendLine("             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound) {");
