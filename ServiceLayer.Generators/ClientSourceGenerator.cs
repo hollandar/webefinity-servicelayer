@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -81,7 +82,12 @@ public class ClientSourceGenerator : IIncrementalGenerator
                 {
                     routeInterfaceComponent = routeInterfaceComponent.Substring(1);
                 }
-                var defaultRoute = $"s/{routeInterfaceComponent}/{methodName}".ToLower();
+                var methodRoute = methodName;
+                if (methodRoute.EndsWith("async", StringComparison.OrdinalIgnoreCase))
+                {
+                    methodRoute = methodRoute.Substring(0, methodRoute.Length - "async".Length);
+                }
+                var defaultRoute = $"s/{routeInterfaceComponent}/{methodRoute}".ToLower();
 
                 var exposedServiceRoute = EnumerateAttributeSyntax(semanticModel, methodDeclarationSyntax, "ServiceLayer.Abstractions.ExposedServiceRouteAttribute").FirstOrDefault();
                 if (exposedServiceRoute is not null)
@@ -285,15 +291,15 @@ public class ClientSourceGenerator : IIncrementalGenerator
             sourceBuilder.AppendLine($"        {{");
             if (method.DataParmeter.dataParameterType is not null)
             {
-                sourceBuilder.AppendLine($"             var response = await client.PostAsJsonAsync<{method.DataParmeter.dataParameterType}>($\"{method.Route}\", {method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterName});");
+                sourceBuilder.AppendLine($"             using var response = await client.PostAsJsonAsync<{method.DataParmeter.dataParameterType}>($\"{method.Route}\", {method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterName});");
             }
             else
             {
-                sourceBuilder.AppendLine($"             var response = await client.GetAsync($\"{method.Route}\", {method.CancellationParameter.cancellationParameterName});");
+                sourceBuilder.AppendLine($"             using var response = await client.GetAsync($\"{method.Route}\", {method.CancellationParameter.cancellationParameterName});");
             }
             sourceBuilder.AppendLine("             if (response.IsSuccessStatusCode)");
             sourceBuilder.AppendLine("             {");
-            sourceBuilder.AppendLine($"                 var content = await response.Content.ReadFromJsonAsync<{method.ReturnType}>();");
+            sourceBuilder.AppendLine($"                 var content = await response.Content.ReadFromJsonAsync<{method.ReturnType}>(ct);");
             sourceBuilder.AppendLine("                 return content!;");
             sourceBuilder.AppendLine("             }");
             sourceBuilder.AppendLine("             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound) {");
@@ -301,7 +307,7 @@ public class ClientSourceGenerator : IIncrementalGenerator
             sourceBuilder.AppendLine("             }");
             sourceBuilder.AppendLine("             else");
             sourceBuilder.AppendLine("             {");
-            sourceBuilder.AppendLine("                 throw new InvalidOperationException();");
+            sourceBuilder.AppendLine($"                 throw new InvalidOperationException($\"{method.Route} failed with status code {{response.StatusCode}}\");");
             sourceBuilder.AppendLine("             }");
             sourceBuilder.AppendLine($"        }}");
         }

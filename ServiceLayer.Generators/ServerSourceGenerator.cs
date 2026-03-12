@@ -105,7 +105,14 @@ public class ServerSourceGenerator : IIncrementalGenerator
                 {
                     routeInterfaceComponent = routeInterfaceComponent.Substring(1);
                 }
-                var defaultRoute = $"/s/{routeInterfaceComponent}/{methodName}".ToLower();
+
+                var methodRoute = methodName;
+                if (methodRoute.EndsWith("async", StringComparison.OrdinalIgnoreCase))
+                {
+                    methodRoute = methodRoute.Substring(0, methodRoute.Length - "async".Length);
+                }
+
+                var defaultRoute = $"/s/{routeInterfaceComponent}/{methodRoute}".ToLower();
 
                 var exposedServiceRoute = EnumerateAttributeSyntax(semanticModel, methodDeclarationSyntax, "ServiceLayer.Abstractions.ExposedServiceRouteAttribute").FirstOrDefault();
                 if (exposedServiceRoute is not null)
@@ -298,11 +305,11 @@ public class ServerSourceGenerator : IIncrementalGenerator
         foreach (var method in source.Methods) {
             if (method.DataParmeter.dataParameterType is not null)
             {
-                sourceBuilder.AppendLine($"            app.MapPost(\"{method.Route}\", async ({source.InterfaceNamespace}.{source.InterfaceName} service, [FromBody] {method.DataParmeter.dataParameterType} {method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => await service.{method.Name}({method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterName}));");
+                sourceBuilder.AppendLine($"            app.MapPost(\"{method.Route}\", ({source.InterfaceNamespace}.{source.InterfaceName} service, [FromBody] {method.DataParmeter.dataParameterType} {method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => service.{method.Name}({method.DataParmeter.dataParameterName}, {method.CancellationParameter.cancellationParameterName}));");
             }
             else
             {
-                sourceBuilder.AppendLine($"            app.MapGet(\"{method.Route}\", async ({source.InterfaceNamespace}.{source.InterfaceName} service, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => await service.{method.Name}({method.CancellationParameter.cancellationParameterName}));");
+                sourceBuilder.AppendLine($"            app.MapGet(\"{method.Route}\", ({source.InterfaceNamespace}.{source.InterfaceName} service, {method.CancellationParameter.cancellationParameterType} {method.CancellationParameter.cancellationParameterName}) => service.{method.Name}({method.CancellationParameter.cancellationParameterName}));");
             }
         }
         sourceBuilder.AppendLine( "        }");
